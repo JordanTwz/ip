@@ -1,3 +1,5 @@
+package nami;
+
 import java.util.Scanner;
 
 public class Nami {
