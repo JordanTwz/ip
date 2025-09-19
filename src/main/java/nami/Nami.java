@@ -9,7 +9,8 @@ public class Nami {
             "____________________________________________________________";
 
     public static void main(String[] args) {
-        List<Task> tasks = new ArrayList<>();
+        Storage storage = new Storage("data", "nami.txt");
+        List<Task> tasks = storage.load();
 
         printGreeting();
 
@@ -18,10 +19,7 @@ public class Nami {
             String raw = sc.nextLine();
             if (raw == null) break;
             String input = raw.trim();
-
-            if (input.isEmpty()) {
-                continue; // ignore blank lines
-            }
+            if (input.isEmpty()) continue;
 
             if (input.equals("bye")) {
                 printExit();
@@ -43,6 +41,7 @@ public class Nami {
                     continue;
                 }
                 tasks.get(idx - 1).mark();
+                storage.save(tasks);
                 printLine();
                 System.out.println(" Nice! I've marked this task as done:");
                 System.out.println("   " + tasks.get(idx - 1));
@@ -56,6 +55,7 @@ public class Nami {
                     continue;
                 }
                 tasks.get(idx - 1).unmark();
+                storage.save(tasks);
                 printLine();
                 System.out.println(" OK, I've marked this task as not done yet:");
                 System.out.println("   " + tasks.get(idx - 1));
@@ -69,6 +69,7 @@ public class Nami {
                 }
                 Task t = new ToDo(desc);
                 tasks.add(t);
+                storage.save(tasks);
                 printLine();
                 System.out.println(" Got it. I've added this task:");
                 System.out.println("   " + t);
@@ -90,6 +91,7 @@ public class Nami {
                 String by = (parts.length < 2 || parts[1].trim().isEmpty()) ? "" : parts[1].trim();
                 Task t = new Deadline(desc, by);
                 tasks.add(t);
+                storage.save(tasks);
                 printLine();
                 System.out.println(" Got it. I've added this task:");
                 System.out.println("   " + t);
@@ -116,6 +118,7 @@ public class Nami {
                 }
                 Task t = new Event(desc, from, to);
                 tasks.add(t);
+                storage.save(tasks);
                 printLine();
                 System.out.println(" Got it. I've added this task:");
                 System.out.println("   " + t);
@@ -130,6 +133,7 @@ public class Nami {
                     continue;
                 }
                 Task removed = tasks.remove(idx - 1);
+                storage.save(tasks);
                 printLine();
                 System.out.println(" Noted. I've removed this task:");
                 System.out.println("   " + removed);
@@ -156,9 +160,7 @@ public class Nami {
         }
     }
 
-    private static boolean inRange(int idx, int size) {
-        return idx >= 1 && idx <= size;
-    }
+    private static boolean inRange(int idx, int size) { return idx >= 1 && idx <= size; }
 
     private static void printError(String msg) {
         System.out.println(LINE);
