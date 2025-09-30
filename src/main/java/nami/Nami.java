@@ -1,5 +1,8 @@
 package nami;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Nami {
     private final Storage storage;
     private final TaskList tasks;
@@ -7,7 +10,7 @@ public class Nami {
 
     public Nami() {
         this.ui = new Ui();
-        this.storage = new Storage("data", "nami.txt"); // reuse your Level-7 storage
+        this.storage = new Storage("data", "nami.txt");
         this.tasks = new TaskList(storage.load());
     }
 
@@ -53,7 +56,8 @@ public class Nami {
                 }
 
                 case "deadline": {
-                    Task t = new Deadline(p.desc, p.by);
+                    // p.dueDate is guaranteed non-null by Parser (yyyy-MM-dd)
+                    Task t = new Deadline(p.desc, p.dueDate);
                     tasks.add(t);
                     storage.save(tasks.asList());
                     ui.showAdded(t, tasks.size());
@@ -82,15 +86,9 @@ public class Nami {
     }
 
     private void ensureRange(Integer idx) throws NamiException {
-        if (idx == null) {
-            throw new NamiException("Please provide a task number.");
-        }
-        if (idx <= 0) {
-            throw new NamiException("Task number must be a positive integer.");
-        }
-        if (tasks.size() == 0) {
-            throw new NamiException("Your list is empty. Add a task first (e.g., todo read book).");
-        }
+        if (idx == null) throw new NamiException("Please provide a task number.");
+        if (idx <= 0) throw new NamiException("Task number must be a positive integer.");
+        if (tasks.size() == 0) throw new NamiException("Your list is empty. Add a task first (e.g., todo read book).");
         if (idx > tasks.size()) {
             throw new NamiException("Task number " + idx + " is out of range (1.." + tasks.size() + ").");
         }
