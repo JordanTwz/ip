@@ -2,7 +2,10 @@ package nami;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-
+/**
+ * Parses raw user input into a structured {@link Parsed} command object.
+ * Throws {@link NamiException} with friendly messages for invalid input.
+ */
 public class Parser {
 
     public static Parsed parse(String input) throws NamiException {

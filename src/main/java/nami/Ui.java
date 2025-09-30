@@ -2,7 +2,10 @@ package nami;
 
 import java.util.List;
 import java.util.Scanner;
-
+/**
+ * Handles all user-visible I/O for the text UI:
+ * reading commands and printing responses in the expected format.
+ */
 public class Ui {
     private static final String LINE = "____________________________________________________________";
     private final Scanner sc = new Scanner(System.in);

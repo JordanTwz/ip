@@ -2,7 +2,9 @@ package nami;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * In-memory list of tasks with basic operations and search.
+ */
 public class TaskList {
     private final List<Task> tasks;
 

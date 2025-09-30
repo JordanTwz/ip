@@ -1,10 +1,17 @@
 package nami;
+/**
+ * Entry point and main loop for the Nami chatbot.
+ * Coordinates UI, storage, and in-memory task list.
+ */
 
 public class Nami {
     private final Storage storage;
     private final TaskList tasks;
     private final Ui ui;
 
+    /**
+     * Creates a Nami app wired to data/nami.txt for persistence.
+     */
     public Nami() {
         this.ui = new Ui();
         this.storage = new Storage("data", "nami.txt");
