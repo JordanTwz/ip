@@ -19,7 +19,6 @@ public class Parser {
         switch (cmd) {
         case "bye":
         case "list":
-            // treat extra arguments as a user mistake
             if (!rest.isEmpty()) {
                 throw new NamiException("'" + cmd + "' does not take any arguments.");
             }
@@ -28,7 +27,6 @@ public class Parser {
         case "mark":
         case "unmark":
         case "delete":
-            // must be exactly one positive-integer token
             requireSinglePositiveInteger(rest, cmd);
             p.index = Integer.parseInt(rest);
             return p;
@@ -41,7 +39,6 @@ public class Parser {
             return p;
 
         case "deadline": {
-            // Level-8: require "<desc> /by yyyy-MM-dd" and parse to LocalDate
             int byIdx = rest.indexOf("/by");
             if (byIdx < 0) {
                 throw new NamiException("Deadline needs '/by'. Try: deadline return book /by 2019-10-15");
@@ -60,13 +57,11 @@ public class Parser {
             } catch (DateTimeParseException ex) {
                 throw new NamiException("Use date format yyyy-MM-dd (e.g., 2019-10-15).");
             }
-            // keep by string for backward-compatibility if callers still read it
-            p.by = dateText;
+            p.by = dateText; // keep raw for storage compatibility paths
             return p;
         }
 
         case "event": {
-            // unchanged (Level-8 minimal only requires deadlines to use dates)
             if (!rest.contains("/from") || !rest.contains("/to")) {
                 throw new NamiException("Event needs '/from' and '/to'. Try: event meeting /from Mon 2pm /to 4pm");
             }
@@ -81,6 +76,14 @@ public class Parser {
             if (p.desc.isEmpty())  throw new NamiException("Event needs a description before /from.");
             if (p.from.isEmpty())  throw new NamiException("Event /from time cannot be empty.");
             if (p.to.isEmpty())    throw new NamiException("Event needs a /to time.");
+            return p;
+        }
+
+        case "find": {
+            if (rest.isEmpty()) {
+                throw new NamiException("Please provide a keyword. Try: find book");
+            }
+            p.keyword = normalizeSpaces(rest); // allow multi-word phrase
             return p;
         }
 
@@ -115,11 +118,12 @@ public class Parser {
     public static class Parsed {
         public final String cmd;
         public String desc = "";
-        public String by   = "";       // kept for backward-compat
+        public String by   = "";
         public String from = "";
         public String to   = "";
         public Integer index = null;
-        public LocalDate dueDate = null;   // <-- Level-8 field
+        public LocalDate dueDate = null;   // Level-8
+        public String keyword = "";        // Level-9
 
         public Parsed(String cmd) { this.cmd = cmd; }
     }
