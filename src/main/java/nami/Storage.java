@@ -3,6 +3,8 @@ package nami;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +27,6 @@ public class Storage {
             }
             for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
                 if (line.trim().isEmpty()) continue;
-                // T | 1 | desc
-                // D | 0 | desc | by
-                // E | 0 | desc | from | to
                 String[] parts = line.split("\\s*\\|\\s*");
                 if (parts.length < 3) continue;
                 String type = parts[0].trim();
@@ -39,14 +38,19 @@ public class Storage {
                 case "T":
                     t = new ToDo(desc);
                     break;
-                case "D":
-                    t = new Deadline(desc, parts.length > 3 ? parts[3].trim() : "");
+                case "D": {
+                    String byField = parts.length > 3 ? parts[3].trim() : "";
+                    LocalDate date = null;
+                    try { date = LocalDate.parse(byField); } catch (DateTimeParseException ignored) { }
+                    t = (date != null) ? new Deadline(desc, date) : new Deadline(desc, byField);
                     break;
-                case "E":
+                }
+                case "E": {
                     String from = parts.length > 3 ? parts[3].trim() : "";
-                    String to = parts.length > 4 ? parts[4].trim() : "";
+                    String to   = parts.length > 4 ? parts[4].trim() : "";
                     t = new Event(desc, from, to);
                     break;
+                }
                 default:
                     continue;
                 }

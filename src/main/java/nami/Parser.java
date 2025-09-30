@@ -1,5 +1,8 @@
 package nami;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+
 public class Parser {
 
     public static Parsed parse(String input) throws NamiException {
@@ -38,25 +41,32 @@ public class Parser {
             return p;
 
         case "deadline": {
-            // needs "<desc> /by <when>"
+            // Level-8: require "<desc> /by yyyy-MM-dd" and parse to LocalDate
             int byIdx = rest.indexOf("/by");
             if (byIdx < 0) {
-                throw new NamiException("Deadline needs '/by'. Try: deadline return book /by Sunday");
+                throw new NamiException("Deadline needs '/by'. Try: deadline return book /by 2019-10-15");
             }
             String[] parts = rest.split("\\s+/by\\s+", 2);
             p.desc = normalizeSpaces(parts[0]);
-            p.by = (parts.length > 1) ? parts[1].trim() : "";
             if (p.desc.isEmpty()) {
                 throw new NamiException("Deadline needs a description before /by.");
             }
-            if (p.by.isEmpty()) {
-                throw new NamiException("Deadline needs a time after /by. Try: deadline return book /by Sunday");
+            if (parts.length < 2 || parts[1].isBlank()) {
+                throw new NamiException("Deadline needs a date after /by. Use yyyy-MM-dd (e.g., 2019-10-15).");
             }
+            String dateText = parts[1].trim();
+            try {
+                p.dueDate = LocalDate.parse(dateText); // ISO yyyy-MM-dd
+            } catch (DateTimeParseException ex) {
+                throw new NamiException("Use date format yyyy-MM-dd (e.g., 2019-10-15).");
+            }
+            // keep by string for backward-compatibility if callers still read it
+            p.by = dateText;
             return p;
         }
 
         case "event": {
-            // needs "<desc> /from <start> /to <end>"
+            // unchanged (Level-8 minimal only requires deadlines to use dates)
             if (!rest.contains("/from") || !rest.contains("/to")) {
                 throw new NamiException("Event needs '/from' and '/to'. Try: event meeting /from Mon 2pm /to 4pm");
             }
@@ -92,7 +102,6 @@ public class Parser {
             throw new NamiException("Task number must be a positive integer. Try: " + cmd + " 2");
         }
         try {
-            // also guard absurdly large values that overflow int
             Integer.parseInt(n);
         } catch (NumberFormatException e) {
             throw new NamiException("Task number is too large. Try a smaller positive integer.");
@@ -106,10 +115,11 @@ public class Parser {
     public static class Parsed {
         public final String cmd;
         public String desc = "";
-        public String by   = "";
+        public String by   = "";       // kept for backward-compat
         public String from = "";
         public String to   = "";
         public Integer index = null;
+        public LocalDate dueDate = null;   // <-- Level-8 field
 
         public Parsed(String cmd) { this.cmd = cmd; }
     }
