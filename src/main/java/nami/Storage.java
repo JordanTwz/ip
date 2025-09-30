@@ -7,7 +7,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Persistence layer that loads/saves tasks to a UTF-8 text file.
+ * Deadline dates use ISO format (yyyy-MM-dd) when available.
+ */
 public class Storage {
     private final Path dir;
     private final Path file;
