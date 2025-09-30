@@ -1,8 +1,5 @@
 package nami;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Nami {
     private final Storage storage;
     private final TaskList tasks;
@@ -56,7 +53,6 @@ public class Nami {
                 }
 
                 case "deadline": {
-                    // p.dueDate is guaranteed non-null by Parser (yyyy-MM-dd)
                     Task t = new Deadline(p.desc, p.dueDate);
                     tasks.add(t);
                     storage.save(tasks.asList());
@@ -77,6 +73,10 @@ public class Nami {
                     Task removed = tasks.remove(p.index - 1);
                     storage.save(tasks.asList());
                     ui.showDeleted(removed, tasks.size());
+                    break;
+
+                case "find":
+                    ui.showFind(tasks.findByKeyword(p.keyword));
                     break;
                 }
             } catch (NamiException e) {
