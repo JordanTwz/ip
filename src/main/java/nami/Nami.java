@@ -18,6 +18,11 @@ public class Nami {
         this.tasks = new TaskList(storage.load());
     }
 
+    /**
+     * Runs the blocking command loop until the user says {@code bye} or
+     * {@link Ui#readCommand()} reaches EOF. Delegates parsing and persistence to
+     * {@link Parser}, {@link TaskList}, and {@link Storage} respectively.
+     */
     public void run() {
         ui.showWelcome();
         boolean exit = false;
@@ -92,6 +97,12 @@ public class Nami {
         }
     }
 
+    /**
+     * Ensures a 1-based task index is present and within the current list size.
+     *
+     * @param idx Parsed task index from the user input.
+     * @throws NamiException if the index is missing, non-positive, or outside the list.
+     */
     private void ensureRange(Integer idx) throws NamiException {
         if (idx == null) throw new NamiException("Please provide a task number.");
         if (idx <= 0) throw new NamiException("Task number must be a positive integer.");
