@@ -10,6 +10,9 @@ public class Ui {
     private static final String LINE = "____________________________________________________________";
     private final Scanner sc = new Scanner(System.in);
 
+    /**
+     * Reads the next line from input, returning {@code null} on EOF so the caller can exit cleanly.
+     */
     public String readCommand() {
         return sc.hasNextLine() ? sc.nextLine() : null;
     }
@@ -74,6 +77,9 @@ public class Ui {
         showLine();
     }
 
+    /**
+     * Prints find results while preserving encounter order; shows a friendly message when empty.
+     */
     public void showFind(List<Task> matches) {
         showLine();
         if (matches.isEmpty()) {

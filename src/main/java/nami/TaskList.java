@@ -16,6 +16,10 @@ public class TaskList {
         this.tasks = new ArrayList<>(initial);
     }
 
+    /**
+     * Exposes the backing list so callers can iterate or persist tasks.
+     * Mutating the returned list updates the underlying task store directly.
+     */
     public List<Task> asList() { return tasks; }
 
     public int size() { return tasks.size(); }
@@ -26,6 +30,12 @@ public class TaskList {
 
     public Task remove(int idx) { return tasks.remove(idx); }
 
+    /**
+     * Returns new list containing tasks whose description includes the keyword (case-insensitive).
+     *
+     * @param keyword Search term entered by the user.
+     * @return Matching tasks in encounter order.
+     */
     public List<Task> findByKeyword(String keyword) {
         String needle = keyword.toLowerCase();
         List<Task> out = new ArrayList<>();
