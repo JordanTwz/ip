@@ -15,11 +15,23 @@ public class Storage {
     private final Path dir;
     private final Path file;
 
+    /**
+     * Creates a storage layer targeting {@code dirName/fileName}.
+     *
+     * @param dirName  Directory used to house the save file.
+     * @param fileName Name of the UTF-8 text file containing task data.
+     */
     public Storage(String dirName, String fileName) {
         this.dir = Paths.get(dirName);
         this.file = this.dir.resolve(fileName);
     }
 
+    /**
+     * Loads tasks from disk, tolerating malformed lines by skipping them.
+     * Missing directories/files are created on demand.
+     *
+     * @return Mutable list populated with tasks reconstructed from storage.
+     */
     public List<Task> load() {
         List<Task> tasks = new ArrayList<>();
         try {
@@ -64,6 +76,12 @@ public class Storage {
         return tasks;
     }
 
+    /**
+     * Writes the current task list to disk in the Duke storage format.
+     * Existing content is replaced atomically via truncate + write.
+     *
+     * @param tasks Ordered tasks to persist.
+     */
     public void save(List<Task> tasks) {
         try {
             if (!Files.exists(dir)) Files.createDirectories(dir);
