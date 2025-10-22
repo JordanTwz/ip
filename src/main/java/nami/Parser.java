@@ -8,6 +8,13 @@ import java.time.format.DateTimeParseException;
  */
 public class Parser {
 
+    /**
+     * Parses one line of user input and captures argument data for downstream handling.
+     *
+     * @param input Raw text entered by the user.
+     * @return A populated {@link Parsed} record describing the command and arguments.
+     * @throws NamiException When the command is unknown or fails validation.
+     */
     public static Parsed parse(String input) throws NamiException {
         if (input == null) throw new NamiException("Please enter a command.");
         String trimmed = input.strip();
@@ -68,17 +75,26 @@ public class Parser {
             if (!rest.contains("/from") || !rest.contains("/to")) {
                 throw new NamiException("Event needs '/from' and '/to'. Try: event meeting /from Mon 2pm /to 4pm");
             }
-            String[] p1 = rest.split("\\s+/from\\s+", 2);
-            p.desc = normalizeSpaces(p1[0]);
-            if (p1.length < 2) {
-                throw new NamiException("Event needs a /from time. Try: event meeting /from Mon 2pm /to 4pm");
+            int fromIdx = rest.indexOf("/from");
+            int toIdx = rest.indexOf("/to", fromIdx + 5);
+            if (fromIdx < 0 || toIdx < 0) {
+                throw new NamiException("Event needs '/from' and '/to'. Try: event meeting /from Mon 2pm /to 4pm");
             }
-            String[] p2 = p1[1].split("\\s+/to\\s+", 2);
-            p.from = p2[0].trim();
-            p.to   = (p2.length > 1) ? p2[1].trim() : "";
-            if (p.desc.isEmpty())  throw new NamiException("Event needs a description before /from.");
-            if (p.from.isEmpty())  throw new NamiException("Event /from time cannot be empty.");
-            if (p.to.isEmpty())    throw new NamiException("Event needs a /to time.");
+            String descPart = rest.substring(0, fromIdx).trim();
+            String fromPart = rest.substring(fromIdx + 5, toIdx).trim();
+            String toPart = rest.substring(toIdx + 3).trim();
+            if (descPart.isEmpty()) {
+                throw new NamiException("Event needs a description before /from.");
+            }
+            if (fromPart.isEmpty()) {
+                throw new NamiException("Event needs a /from time.");
+            }
+            if (toPart.isEmpty()) {
+                throw new NamiException("Event needs a /to time.");
+            }
+            p.desc = normalizeSpaces(descPart);
+            p.from = normalizeSpaces(fromPart);
+            p.to = normalizeSpaces(toPart);
             return p;
         }
 
@@ -95,6 +111,13 @@ public class Parser {
         }
     }
 
+    /**
+     * Validates that a space-separated argument string contains exactly one positive integer.
+     *
+     * @param s   The argument substring to validate.
+     * @param cmd Command word for error messaging context.
+     * @throws NamiException if the argument is missing, malformed, or out of range.
+     */
     private static void requireSinglePositiveInteger(String s, String cmd) throws NamiException {
         if (s == null || s.isEmpty()) {
             throw new NamiException("Please provide a task number. Try: " + cmd + " 2");
@@ -114,10 +137,20 @@ public class Parser {
         }
     }
 
+    /**
+     * Collapses repeating whitespace and trims leading/trailing spaces.
+     *
+     * @param s Text to normalise.
+     * @return String with internal whitespace collapsed to single spaces.
+     */
     private static String normalizeSpaces(String s) {
         return s.trim().replaceAll("\\s+", " ");
     }
 
+    /**
+     * Immutable command payload produced by {@link Parser#parse(String)}.
+     * Fields default to empty/zero and are populated depending on the command.
+     */
     public static class Parsed {
         public final String cmd;
         public String desc = "";
