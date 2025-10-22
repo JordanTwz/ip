@@ -1,5 +1,7 @@
 package nami;
-
+/**
+ * Base type for all tasks, tracking description and completion state.
+ */
 public abstract class Task {
     protected final String description;
     protected boolean isDone;

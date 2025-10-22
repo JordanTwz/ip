@@ -1,16 +1,28 @@
 package nami;
+/**
+ * Entry point and main loop for the Nami chatbot.
+ * Coordinates UI, storage, and in-memory task list.
+ */
 
 public class Nami {
     private final Storage storage;
     private final TaskList tasks;
     private final Ui ui;
 
+    /**
+     * Creates a Nami app wired to data/nami.txt for persistence.
+     */
     public Nami() {
         this.ui = new Ui();
-        this.storage = new Storage("data", "nami.txt"); // reuse your Level-7 storage
+        this.storage = new Storage("data", "nami.txt");
         this.tasks = new TaskList(storage.load());
     }
 
+    /**
+     * Runs the blocking command loop until the user says {@code bye} or
+     * {@link Ui#readCommand()} reaches EOF. Delegates parsing and persistence to
+     * {@link Parser}, {@link TaskList}, and {@link Storage} respectively.
+     */
     public void run() {
         ui.showWelcome();
         boolean exit = false;
@@ -53,7 +65,7 @@ public class Nami {
                 }
 
                 case "deadline": {
-                    Task t = new Deadline(p.desc, p.by);
+                    Task t = new Deadline(p.desc, p.dueDate);
                     tasks.add(t);
                     storage.save(tasks.asList());
                     ui.showAdded(t, tasks.size());
@@ -74,6 +86,10 @@ public class Nami {
                     storage.save(tasks.asList());
                     ui.showDeleted(removed, tasks.size());
                     break;
+
+                case "find":
+                    ui.showFind(tasks.findByKeyword(p.keyword));
+                    break;
                 }
             } catch (NamiException e) {
                 ui.showError(e.getMessage());
@@ -81,16 +97,16 @@ public class Nami {
         }
     }
 
+    /**
+     * Ensures a 1-based task index is present and within the current list size.
+     *
+     * @param idx Parsed task index from the user input.
+     * @throws NamiException if the index is missing, non-positive, or outside the list.
+     */
     private void ensureRange(Integer idx) throws NamiException {
-        if (idx == null) {
-            throw new NamiException("Please provide a task number.");
-        }
-        if (idx <= 0) {
-            throw new NamiException("Task number must be a positive integer.");
-        }
-        if (tasks.size() == 0) {
-            throw new NamiException("Your list is empty. Add a task first (e.g., todo read book).");
-        }
+        if (idx == null) throw new NamiException("Please provide a task number.");
+        if (idx <= 0) throw new NamiException("Task number must be a positive integer.");
+        if (tasks.size() == 0) throw new NamiException("Your list is empty. Add a task first (e.g., todo read book).");
         if (idx > tasks.size()) {
             throw new NamiException("Task number " + idx + " is out of range (1.." + tasks.size() + ").");
         }

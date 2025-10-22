@@ -2,11 +2,17 @@ package nami;
 
 import java.util.List;
 import java.util.Scanner;
-
+/**
+ * Handles all user-visible I/O for the text UI:
+ * reading commands and printing responses in the expected format.
+ */
 public class Ui {
     private static final String LINE = "____________________________________________________________";
     private final Scanner sc = new Scanner(System.in);
 
+    /**
+     * Reads the next line from input, returning {@code null} on EOF so the caller can exit cleanly.
+     */
     public String readCommand() {
         return sc.hasNextLine() ? sc.nextLine() : null;
     }
@@ -68,6 +74,22 @@ public class Ui {
         System.out.println(" Noted. I've removed this task:");
         System.out.println("   " + t);
         System.out.println(" Now you have " + count + " tasks in the list.");
+        showLine();
+    }
+
+    /**
+     * Prints find results while preserving encounter order; shows a friendly message when empty.
+     */
+    public void showFind(List<Task> matches) {
+        showLine();
+        if (matches.isEmpty()) {
+            System.out.println(" No matching tasks found.");
+        } else {
+            System.out.println(" Here are the matching tasks in your list:");
+            for (int i = 0; i < matches.size(); i++) {
+                System.out.println(" " + (i + 1) + "." + matches.get(i));
+            }
+        }
         showLine();
     }
 }
