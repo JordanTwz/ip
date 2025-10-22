@@ -16,95 +16,34 @@ public class Parser {
      * @throws NamiException When the command is unknown or fails validation.
      */
     public static Parsed parse(String input) throws NamiException {
-        if (input == null) throw new NamiException("Please enter a command.");
-        String trimmed = input.strip();
-        if (trimmed.isEmpty()) throw new NamiException("Please enter a command.");
+        String trimmedInput = sanitizeInput(input);
 
-        String[] head = trimmed.split("\\s+", 2);
-        String cmd = head[0];
-        String rest = head.length > 1 ? head[1].trim() : "";
+        String[] tokens = trimmedInput.split("\\s+", 2);
+        String commandWord = tokens[0];
+        String arguments = tokens.length > 1 ? tokens[1].trim() : "";
 
-        Parsed p = new Parsed(cmd);
-
-        switch (cmd) {
+        switch (commandWord) {
         case "bye":
         case "list":
-            if (!rest.isEmpty()) {
-                throw new NamiException("'" + cmd + "' does not take any arguments.");
-            }
-            return p;
+            ensureNoArguments(commandWord, arguments);
+            return new Parsed(commandWord);
 
         case "mark":
         case "unmark":
         case "delete":
-            requireSinglePositiveInteger(rest, cmd);
-            p.index = Integer.parseInt(rest);
-            return p;
+            return parseIndexCommand(commandWord, arguments);
 
         case "todo":
-            if (rest.isEmpty()) {
-                throw new NamiException("The description of a todo cannot be empty. Try: todo read book");
-            }
-            p.desc = normalizeSpaces(rest);
-            return p;
+            return parseTodo(arguments, commandWord);
 
-        case "deadline": {
-            int byIdx = rest.indexOf("/by");
-            if (byIdx < 0) {
-                throw new NamiException("Deadline needs '/by'. Try: deadline return book /by 2019-10-15");
-            }
-            String[] parts = rest.split("\\s+/by\\s+", 2);
-            p.desc = normalizeSpaces(parts[0]);
-            if (p.desc.isEmpty()) {
-                throw new NamiException("Deadline needs a description before /by.");
-            }
-            if (parts.length < 2 || parts[1].isBlank()) {
-                throw new NamiException("Deadline needs a date after /by. Use yyyy-MM-dd (e.g., 2019-10-15).");
-            }
-            String dateText = parts[1].trim();
-            try {
-                p.dueDate = LocalDate.parse(dateText); // ISO yyyy-MM-dd
-            } catch (DateTimeParseException ex) {
-                throw new NamiException("Use date format yyyy-MM-dd (e.g., 2019-10-15).");
-            }
-            p.by = dateText; // keep raw for storage compatibility paths
-            return p;
-        }
+        case "deadline":
+            return parseDeadline(arguments, commandWord);
 
-        case "event": {
-            if (!rest.contains("/from") || !rest.contains("/to")) {
-                throw new NamiException("Event needs '/from' and '/to'. Try: event meeting /from Mon 2pm /to 4pm");
-            }
-            int fromIdx = rest.indexOf("/from");
-            int toIdx = rest.indexOf("/to", fromIdx + 5);
-            if (fromIdx < 0 || toIdx < 0) {
-                throw new NamiException("Event needs '/from' and '/to'. Try: event meeting /from Mon 2pm /to 4pm");
-            }
-            String descPart = rest.substring(0, fromIdx).trim();
-            String fromPart = rest.substring(fromIdx + 5, toIdx).trim();
-            String toPart = rest.substring(toIdx + 3).trim();
-            if (descPart.isEmpty()) {
-                throw new NamiException("Event needs a description before /from.");
-            }
-            if (fromPart.isEmpty()) {
-                throw new NamiException("Event needs a /from time.");
-            }
-            if (toPart.isEmpty()) {
-                throw new NamiException("Event needs a /to time.");
-            }
-            p.desc = normalizeSpaces(descPart);
-            p.from = normalizeSpaces(fromPart);
-            p.to = normalizeSpaces(toPart);
-            return p;
-        }
+        case "event":
+            return parseEvent(arguments, commandWord);
 
-        case "find": {
-            if (rest.isEmpty()) {
-                throw new NamiException("Please provide a keyword. Try: find book");
-            }
-            p.keyword = normalizeSpaces(rest); // allow multi-word phrase
-            return p;
-        }
+        case "find":
+            return parseFind(arguments, commandWord);
 
         default:
             throw new NamiException("I'm sorry, I don't know what that means :-(");
@@ -145,6 +84,107 @@ public class Parser {
      */
     private static String normalizeSpaces(String s) {
         return s.trim().replaceAll("\\s+", " ");
+    }
+
+    private static String sanitizeInput(String input) throws NamiException {
+        if (input == null) {
+            throw new NamiException("Please enter a command.");
+        }
+        String trimmed = input.strip();
+        if (trimmed.isEmpty()) {
+            throw new NamiException("Please enter a command.");
+        }
+        return trimmed;
+    }
+
+    private static void ensureNoArguments(String commandWord, String arguments) throws NamiException {
+        if (!arguments.isEmpty()) {
+            throw new NamiException("'" + commandWord + "' does not take any arguments.");
+        }
+    }
+
+    private static Parsed parseIndexCommand(String commandWord, String arguments) throws NamiException {
+        int index = parseSinglePositiveInteger(arguments, commandWord);
+        Parsed parsedCommand = new Parsed(commandWord);
+        parsedCommand.index = index;
+        return parsedCommand;
+    }
+
+    private static Parsed parseTodo(String arguments, String commandWord) throws NamiException {
+        if (arguments.isEmpty()) {
+            throw new NamiException("The description of a todo cannot be empty. Try: " + commandWord + " read book");
+        }
+        Parsed parsedCommand = new Parsed(commandWord);
+        parsedCommand.desc = normalizeSpaces(arguments);
+        return parsedCommand;
+    }
+
+    private static Parsed parseDeadline(String arguments, String commandWord) throws NamiException {
+        int markerIndex = arguments.indexOf("/by");
+        if (markerIndex < 0) {
+            throw new NamiException("Deadline needs '/by'. Try: " + commandWord + " return book /by 2019-10-15");
+        }
+        String descriptionPart = arguments.substring(0, markerIndex).trim();
+        if (descriptionPart.isEmpty()) {
+            throw new NamiException("Deadline needs a description before /by.");
+        }
+        String datePart = arguments.substring(markerIndex + 3).trim();
+        if (datePart.isEmpty()) {
+            throw new NamiException("Deadline needs a date after /by. Use yyyy-MM-dd (e.g., 2019-10-15).");
+        }
+
+        Parsed parsedCommand = new Parsed(commandWord);
+        parsedCommand.desc = normalizeSpaces(descriptionPart);
+        parsedCommand.by = datePart; // keep raw for storage compatibility paths
+        try {
+            parsedCommand.dueDate = LocalDate.parse(datePart); // ISO yyyy-MM-dd
+        } catch (DateTimeParseException ex) {
+            throw new NamiException("Use date format yyyy-MM-dd (e.g., 2019-10-15).");
+        }
+        return parsedCommand;
+    }
+
+    private static Parsed parseEvent(String arguments, String commandWord) throws NamiException {
+        int fromMarker = arguments.indexOf("/from");
+        int toMarker = arguments.indexOf("/to", fromMarker >= 0 ? fromMarker + 5 : 0);
+        if (fromMarker < 0 || toMarker < 0) {
+            throw new NamiException("Event needs '/from' and '/to'. Try: " + commandWord + " meeting /from Mon 2pm /to 4pm");
+        }
+
+        String descriptionPart = arguments.substring(0, fromMarker).trim();
+        if (descriptionPart.isEmpty()) {
+            throw new NamiException("Event needs a description before /from.");
+        }
+
+        String fromPart = arguments.substring(fromMarker + 5, toMarker).trim();
+        if (fromPart.isEmpty()) {
+            throw new NamiException("Event needs a /from time.");
+        }
+
+        String toPart = arguments.substring(toMarker + 3).trim();
+        if (toPart.isEmpty()) {
+            throw new NamiException("Event needs a /to time.");
+        }
+
+        Parsed parsedCommand = new Parsed(commandWord);
+        parsedCommand.desc = normalizeSpaces(descriptionPart);
+        parsedCommand.from = normalizeSpaces(fromPart);
+        parsedCommand.to = normalizeSpaces(toPart);
+        return parsedCommand;
+    }
+
+    private static Parsed parseFind(String arguments, String commandWord) throws NamiException {
+        if (arguments.isEmpty()) {
+            throw new NamiException("Please provide a keyword. Try: " + commandWord + " book");
+        }
+        Parsed parsedCommand = new Parsed(commandWord);
+        parsedCommand.keyword = normalizeSpaces(arguments); // allow multi-word phrase
+        return parsedCommand;
+    }
+
+    private static int parseSinglePositiveInteger(String arguments, String commandWord) throws NamiException {
+        requireSinglePositiveInteger(arguments, commandWord);
+        return Integer.parseInt(arguments.trim());
     }
 
     /**
