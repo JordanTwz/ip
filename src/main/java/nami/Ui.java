@@ -73,6 +73,20 @@ public class Ui {
         showLine();
     }
 
+    public void showAlreadyMarked(Task t) {
+        showLine();
+        System.out.println(" That task is already marked as done:");
+        System.out.println("   " + t);
+        showLine();
+    }
+
+    public void showAlreadyUnmarked(Task t) {
+        showLine();
+        System.out.println(" That task is already marked as not done:");
+        System.out.println("   " + t);
+        showLine();
+    }
+
     public void showDeleted(Task t, int count) {
         showLine();
         System.out.println(" Noted. I've removed this task:");

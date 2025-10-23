@@ -44,16 +44,26 @@ public class Nami {
 
                 case "mark":
                     ensureRange(p.index);
-                    tasks.get(p.index - 1).mark();
-                    storage.save(tasks.asList());
-                    ui.showMarked(tasks.get(p.index - 1));
+                    Task markTarget = tasks.get(p.index - 1);
+                    if (markTarget.isDone()) {
+                        ui.showAlreadyMarked(markTarget);
+                    } else {
+                        markTarget.mark();
+                        storage.save(tasks.asList());
+                        ui.showMarked(markTarget);
+                    }
                     break;
 
                 case "unmark":
                     ensureRange(p.index);
-                    tasks.get(p.index - 1).unmark();
-                    storage.save(tasks.asList());
-                    ui.showUnmarked(tasks.get(p.index - 1));
+                    Task unmarkTarget = tasks.get(p.index - 1);
+                    if (!unmarkTarget.isDone()) {
+                        ui.showAlreadyUnmarked(unmarkTarget);
+                    } else {
+                        unmarkTarget.unmark();
+                        storage.save(tasks.asList());
+                        ui.showUnmarked(unmarkTarget);
+                    }
                     break;
 
                 case "todo": {
